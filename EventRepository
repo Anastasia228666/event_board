@@ -1,0 +1,38 @@
+package repository;
+import model.Event;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class EventRepository {
+    private final String url = "jdbc:postgresql://localhost:5432/my_db";
+    private final String user = "my_user";
+    private final String password = "my_pass";
+
+    public List<Event> findAll() {
+        List<Event> events = new ArrayList<>();
+        String sql = "SELECT e.*, (e.max_seats - (SELECT COUNT(*) FROM participants p WHERE p.event_id = e.id)) as free_seats FROM events e";
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement st = conn.prepareStatement(sql);
+             ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                Event e = new Event(rs.getInt("id"), rs.getString("title"),
+                        rs.getTimestamp("event_date").toLocalDateTime(), rs.getInt("max_seats"));
+                e.setFreeSeats(rs.getInt("free_seats"));
+                events.add(e);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return events;
+    }
+
+    public void saveEvent(String title, String date, int seats) {
+        String sql = "INSERT INTO events (title, event_date, max_seats) VALUES (?, CAST(? AS TIMESTAMP), ?)";
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setString(1, title);
+            st.setString(2, date.replace("T", " ")); // Для формату TIMESTAMP
+            st.setInt(3, seats);
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+}
