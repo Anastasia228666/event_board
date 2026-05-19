@@ -1,0 +1,19 @@
+package service;
+import repository.EventRepository;
+import model.Event;
+import java.util.List;
+
+public class EventService {
+    private final EventRepository repository;
+    public EventService(EventRepository repository) {
+        this.repository = repository;
+    }
+    public List<Event> getAllEvents() {
+        return repository.findAll();
+    }
+    public boolean canRegister(int eventId) {
+        return repository.findAll().stream()
+                .filter(e -> e.getId() == eventId)
+                .anyMatch(e -> e.getFreeSeats() > 0);
+    }
+}
