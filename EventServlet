@@ -1,0 +1,33 @@
+package controller;
+import repository.EventRepository;
+import service.EventService;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
+import java.io.IOException;
+
+@WebServlet("/events")
+public class EventServlet extends HttpServlet {
+    private EventService service;
+
+    @Override
+    public void init() {
+
+        this.service = new EventService(new EventRepository());
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws jakarta.servlet.ServletException, IOException {
+        req.setAttribute("events", service.getAllEvents());
+        req.getRequestDispatcher("index.jsp").forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String title = req.getParameter("title");
+        String date = req.getParameter("date");
+        int seats = Integer.parseInt(req.getParameter("seats"));
+
+        new EventRepository().saveEvent(title, date, seats);
+        resp.sendRedirect("events");
+    }
+}
